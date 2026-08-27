@@ -31,6 +31,9 @@
     height: 100dvh;
     height: 100vh;
     padding: 8px;
+    padding-top: max(8px, env(safe-area-inset-top));
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
+    box-sizing: border-box;
   }
 
   #guide {
