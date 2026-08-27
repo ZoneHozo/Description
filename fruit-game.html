@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>フルーツマージゲーム</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    height: 100%;
+    background: radial-gradient(ellipse at top, #fff7e6 0%, #ffe4b3 40%, #ffcf8c 100%);
+    font-family: "Hiragino Maru Gothic ProN", "Yu Gothic", sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    touch-action: none;
+  }
+
+  #wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    height: 100dvh;
+    height: 100vh;
+    padding: 8px;
+  }
+
+  #guide {
+    width: 100%;
+    max-width: 480px;
+    background: #fff;
+    border-radius: 14px;
+    padding: 6px 8px;
+    box-shadow: 0 3px 0 #e0c090;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2px;
+    flex-shrink: 0;
+  }
+
+  #guide canvas {
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+  }
+
+  #guide .arrow {
+    color: #d9b88a;
+    font-size: 10px;
+    flex-shrink: 0;
+  }
+
+  #hud {
+    width: 100%;
+    max-width: 480px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: #6b4226;
+    font-weight: bold;
+    flex-shrink: 0;
+  }
+
+  #hud .score-box {
+    background: #fff;
+    border-radius: 14px;
+    padding: 8px 18px;
+    box-shadow: 0 3px 0 #e0c090;
+    font-size: 20px;
+  }
+
+  #next-box {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #fff;
+    border-radius: 14px;
+    padding: 6px 14px;
+    box-shadow: 0 3px 0 #e0c090;
+    font-size: 14px;
+  }
+
+  #sound-btn {
+    background: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 38px;
+    height: 38px;
+    box-shadow: 0 3px 0 #e0c090;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #sound-btn:active {
+    transform: translateY(2px);
+    box-shadow: 0 1px 0 #e0c090;
+  }
+
+  #next-canvas {
+    width: 40px;
+    height: 40px;
+  }
+
+  #game-container {
+    position: relative;
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 12px 30px rgba(120, 70, 20, 0.35);
+    border: 6px solid #f5deb3;
+    cursor: pointer;
+    width: 100%;
+    max-width: 480px;
+    flex: 1 1 auto;
+    min-height: 0;
+    aspect-ratio: 400 / 560;
+  }
+
+  #game-container canvas#game-canvas {
+    width: 100%;
+    height: 100%;
+  }
+
+  canvas { display: block; touch-action: none; }
+
+  #overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 245, 220, 0.96);
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    z-index: 10;
+    padding: 14px 14px 16px;
+    overflow-y: auto;
+  }
+
+  #overlay.show { display: flex; }
+
+  #overlay h2 {
+    color: #a5502a;
+    font-size: 24px;
+    margin: 4px 0 8px;
+  }
+
+  #gameover-snapshot {
+    width: 62%;
+    max-width: 220px;
+    border-radius: 10px;
+    border: 3px solid #f0c98a;
+    box-shadow: 0 4px 10px rgba(120,70,20,0.25);
+    margin-bottom: 8px;
+  }
+
+  #overlay .final-score-line {
+    color: #6b4226;
+    font-size: 15px;
+    margin-bottom: 6px;
+  }
+
+  #overlay .final-score-line b {
+    font-size: 20px;
+  }
+
+  #ranking-box {
+    width: 100%;
+    max-width: 260px;
+    background: #fff;
+    border-radius: 12px;
+    padding: 8px 12px;
+    box-shadow: 0 3px 0 #e0c090;
+    margin-bottom: 6px;
+  }
+
+  #ranking-box h3 {
+    font-size: 13px;
+    color: #a5502a;
+    margin: 2px 0 6px;
+    text-align: center;
+  }
+
+  .rank-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    color: #6b4226;
+    padding: 3px 2px;
+    border-radius: 6px;
+  }
+
+  .rank-row.me {
+    background: #ffe4b3;
+    font-weight: bold;
+  }
+
+  #rank-summary {
+    color: #a5502a;
+    font-weight: bold;
+    font-size: 13px;
+    margin-bottom: 10px;
+  }
+
+  #overlay button {
+    background: #ff9d4d;
+    border: none;
+    color: white;
+    padding: 12px 28px;
+    font-size: 16px;
+    font-weight: bold;
+    border-radius: 30px;
+    cursor: pointer;
+    box-shadow: 0 4px 0 #d97a2c;
+    margin-top: auto;
+    flex-shrink: 0;
+  }
+
+  #overlay button:active {
+    transform: translateY(2px);
+    box-shadow: 0 2px 0 #d97a2c;
+  }
+
+  #hint {
+    color: #8a5a30;
+    font-size: 13px;
+  }
+
+  #warn-line {
+    position: absolute;
+    left: 0; right: 0;
+    border-top: 2px dashed rgba(200, 80, 60, 0.5);
+    pointer-events: none;
+  }
+</style>
+</head>
+<body>
+
+<div id="wrap">
+  <div id="guide"></div>
+  <div id="hud">
+    <div class="score-box">スコア: <span id="score">0</span></div>
+    <div id="next-box">つぎ <canvas id="next-canvas" width="40" height="40"></canvas></div>
+    <button id="sound-btn" title="音のON/OFF">🔊</button>
+  </div>
+
+  <div id="game-container">
+    <canvas id="game-canvas" width="400" height="560"></canvas>
+    <div id="warn-line" style="top:90px;"></div>
+    <div id="overlay">
+      <h2>ゲームオーバー</h2>
+      <img id="gameover-snapshot" alt="ゲーム終了時の盤面">
+      <div class="final-score-line">スコア: <b id="final-score">0</b></div>
+      <div id="rank-summary"></div>
+      <div id="ranking-box">
+        <h3>🏆 ランキング TOP5</h3>
+        <div id="ranking-list"></div>
+      </div>
+      <button id="restart-btn">次のゲームを始める</button>
+    </div>
+  </div>
+  <div id="hint">マウスを動かして位置調整・クリックで落とす</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+<script>
+const { Engine, Render, World, Bodies, Body, Events, Runner } = Matter;
+
+// フルーツの定義（半径・色・スコア）小 → 大
+const FRUITS = [
+  { radius: 14, color: '#ff6b81', label: '🍒' },
+  { radius: 19, color: '#ff8fab', label: '🍓' },
+  { radius: 25, color: '#ffb703', label: '🍊' },
+  { radius: 32, color: '#fb8500', label: '🍑' },
+  { radius: 40, color: '#e63946', label: '🍎' },
+  { radius: 49, color: '#ffd166', label: '🍐' },
+  { radius: 59, color: '#f4a261', label: '🍑' },
+  { radius: 71, color: '#ffb347', label: '🍍' },
+  { radius: 85, color: '#8ac926', label: '🍈' },
+  { radius: 100, color: '#2a9d8f', label: '🍉' }
+];
+
+const W = 400, H = 560;
+const WALL_THICK = 40;
+const DROP_Y = 60;
+const GAMEOVER_LINE = 90;
+
+const canvas = document.getElementById('game-canvas');
+const scoreEl = document.getElementById('score');
+const finalScoreEl = document.getElementById('final-score');
+const overlay = document.getElementById('overlay');
+const nextCanvas = document.getElementById('next-canvas');
+const nextCtx = nextCanvas.getContext('2d');
+
+let engine, world, render, runner;
+let score = 0;
+let currentFruitIndex = 0;
+let nextFruitIndex = 0;
+let currentBody = null;
+let canDrop = true;
+let gameOver = false;
+let pointerX = W / 2;
+let dangerTimer = 0;
+// このセッション中の履歴（ページを閉じるとリセットされます）
+let scoreHistory = [];
+
+// ---------- サウンド（Web Audio APIで自前生成、外部音源不使用） ----------
+let audioCtx = null;
+let masterGain = null;
+let musicGain = null;
+let sfxGain = null;
+let soundOn = true;
+let schedulerTimer = null;
+let nextNoteTime = 0;
+let step = 0;
+const BPM = 108;
+const STEP_DUR = 60 / BPM / 2; // 8分音符
+
+// 明るいメジャースケールのゆるいループ（メロディ）。null=休符
+const MELODY = [523, null, 659, 523, null, 784, 659, null,
+                587, null, 698, 587, null, 880, 698, null];
+// ベースライン
+const BASSLINE = [131, null, null, null, 165, null, null, null,
+                  147, null, null, null, 196, null, null, null];
+
+function ensureAudio() {
+  if (audioCtx) return;
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  masterGain = audioCtx.createGain();
+  masterGain.gain.value = soundOn ? 1 : 0;
+  masterGain.connect(audioCtx.destination);
+
+  musicGain = audioCtx.createGain();
+  musicGain.gain.value = 0.12;
+  musicGain.connect(masterGain);
+
+  sfxGain = audioCtx.createGain();
+  sfxGain.gain.value = 0.25;
+  sfxGain.connect(masterGain);
+
+  nextNoteTime = audioCtx.currentTime + 0.1;
+  schedulerTimer = setInterval(scheduleNotes, 25);
+}
+
+function playTone(freq, time, dur, type, gainNode, peak) {
+  const osc = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  osc.type = type;
+  osc.frequency.value = freq;
+  g.gain.setValueAtTime(0.0001, time);
+  g.gain.exponentialRampToValueAtTime(peak, time + 0.02);
+  g.gain.exponentialRampToValueAtTime(0.0001, time + dur);
+  osc.connect(g);
+  g.connect(gainNode);
+  osc.start(time);
+  osc.stop(time + dur + 0.02);
+}
+
+function scheduleNotes() {
+  if (!audioCtx) return;
+  while (nextNoteTime < audioCtx.currentTime + 0.12) {
+    const m = MELODY[step % MELODY.length];
+    const b = BASSLINE[step % BASSLINE.length];
+    if (m) playTone(m, nextNoteTime, STEP_DUR * 0.9, 'triangle', musicGain, 0.5);
+    if (b) playTone(b, nextNoteTime, STEP_DUR * 1.8, 'sine', musicGain, 0.6);
+    step++;
+    nextNoteTime += STEP_DUR;
+  }
+}
+
+function playMergeSound(fruitIndex) {
+  if (!audioCtx || !soundOn) return;
+  const t = audioCtx.currentTime;
+  const base = 300 + fruitIndex * 35;
+  playTone(base, t, 0.12, 'sine', sfxGain, 0.7);
+  playTone(base * 1.5, t + 0.03, 0.12, 'sine', sfxGain, 0.5);
+}
+
+function playDropSound() {
+  if (!audioCtx || !soundOn) return;
+  playTone(220, audioCtx.currentTime, 0.08, 'square', sfxGain, 0.3);
+}
+
+function toggleSound() {
+  ensureAudio();
+  soundOn = !soundOn;
+  masterGain.gain.value = soundOn ? 1 : 0;
+  document.getElementById('sound-btn').textContent = soundOn ? '🔊' : '🔇';
+}
+
+document.getElementById('sound-btn').addEventListener('click', toggleSound);
+
+
+function randomStartIndex() {
+  return Math.floor(Math.random() * 5); // 最初の5種類だけ落とせる
+}
+
+function stem(ctx, r) {
+  ctx.strokeStyle = '#6b4226';
+  ctx.lineWidth = Math.max(1.5, r * 0.06);
+  ctx.beginPath();
+  ctx.moveTo(0, -r * 0.9);
+  ctx.quadraticCurveTo(r * 0.15, -r * 1.15, r * 0.05, -r * 1.3);
+  ctx.stroke();
+}
+
+function leaf(ctx, r, side) {
+  ctx.fillStyle = '#4c9a2a';
+  ctx.beginPath();
+  ctx.ellipse(side * r * 0.28, -r * 1.05, r * 0.26, r * 0.14, side * 0.6, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function highlight(ctx, r) {
+  ctx.beginPath();
+  ctx.ellipse(-r * 0.32, -r * 0.32, r * 0.22, r * 0.14, -0.6, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(255,255,255,0.45)';
+  ctx.fill();
+}
+
+// index 0-9 それぞれに固有の見た目を描画。ctxは既に (x,y) に平行移動・回転済みの状態で呼ばれる
+function drawFruitShape(ctx, r, index) {
+  switch (index) {
+    case 0: { // さくらんぼ
+      ctx.fillStyle = '#e0263f';
+      ctx.beginPath(); ctx.arc(-r * 0.35, r * 0.15, r * 0.75, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(r * 0.35, r * 0.15, r * 0.75, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#5a7d2a'; ctx.lineWidth = Math.max(1.2, r * 0.08);
+      ctx.beginPath();
+      ctx.moveTo(-r * 0.35, r * 0.15 - r * 0.7); ctx.quadraticCurveTo(0, -r * 1.3, r * 0.1, -r * 1.4);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(r * 0.35, r * 0.15 - r * 0.7); ctx.quadraticCurveTo(0, -r * 1.3, r * 0.1, -r * 1.4);
+      ctx.stroke();
+      highlight(ctx, r * 0.75);
+      break;
+    }
+    case 1: { // いちご
+      ctx.fillStyle = '#ff3b5c';
+      ctx.beginPath();
+      ctx.moveTo(0, r);
+      ctx.bezierCurveTo(-r * 1.1, r * 0.4, -r * 0.9, -r * 0.9, 0, -r * 0.7);
+      ctx.bezierCurveTo(r * 0.9, -r * 0.9, r * 1.1, r * 0.4, 0, r);
+      ctx.fill();
+      ctx.fillStyle = '#ffe38a';
+      for (let i = -1; i <= 1; i++) {
+        for (let j = 0; j < 2; j++) {
+          ctx.beginPath();
+          ctx.ellipse(i * r * 0.28, r * (0.1 + j * 0.35), r * 0.06, r * 0.09, 0, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+      ctx.fillStyle = '#4c9a2a';
+      for (let a = -2; a <= 2; a++) {
+        ctx.beginPath();
+        ctx.ellipse(a * r * 0.22, -r * 0.75, r * 0.16, r * 0.28, a * 0.25, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      break;
+    }
+    case 2: { // みかん
+      ctx.fillStyle = '#ffa733';
+      ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = 'rgba(200,110,0,0.35)'; ctx.lineWidth = Math.max(1, r * 0.04);
+      for (let a = 0; a < 6; a++) {
+        const ang = (a / 6) * Math.PI * 2;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(Math.cos(ang) * r, Math.sin(ang) * r);
+        ctx.stroke();
+      }
+      leaf(ctx, r, 1);
+      highlight(ctx, r);
+      break;
+    }
+    case 3: { // かき
+      ctx.fillStyle = '#f4a300';
+      ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#7a9c3a';
+      for (let a = 0; a < 4; a++) {
+        const ang = (a / 4) * Math.PI * 2 + 0.4;
+        ctx.beginPath();
+        ctx.ellipse(Math.cos(ang) * r * 0.3, -r * 0.9 + Math.sin(ang) * r * 0.15, r * 0.28, r * 0.16, ang, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      stem(ctx, r);
+      highlight(ctx, r);
+      break;
+    }
+    case 4: { // りんご
+      ctx.fillStyle = '#e6321f';
+      ctx.beginPath();
+      ctx.arc(-r * 0.02, r * 0.05, r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#e6321f';
+      ctx.beginPath();
+      ctx.moveTo(-r * 0.18, -r * 0.85);
+      ctx.quadraticCurveTo(0, -r * 1.05, r * 0.18, -r * 0.85);
+      ctx.quadraticCurveTo(0, -r * 0.7, -r * 0.18, -r * 0.85);
+      ctx.fill();
+      stem(ctx, r);
+      leaf(ctx, r, 1);
+      highlight(ctx, r);
+      break;
+    }
+    case 5: { // なし
+      ctx.fillStyle = '#d8e05a';
+      ctx.beginPath();
+      ctx.arc(0, r * 0.15, r * 0.95, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath();
+      ctx.arc(0, -r * 0.45, r * 0.55, 0, Math.PI * 2); ctx.fill();
+      stem(ctx, r);
+      highlight(ctx, r * 0.9);
+      break;
+    }
+    case 6: { // もも
+      ctx.fillStyle = '#ffb1a3';
+      ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = 'rgba(220,90,80,0.5)'; ctx.lineWidth = Math.max(1.5, r * 0.05);
+      ctx.beginPath();
+      ctx.moveTo(0, -r * 0.9); ctx.quadraticCurveTo(r * 0.1, 0, 0, r * 0.9);
+      ctx.stroke();
+      leaf(ctx, r, -1);
+      highlight(ctx, r);
+      break;
+    }
+    case 7: { // パイナップル
+      const bodyW = r * 0.82, bodyH = r * 1.05;
+      // 胴体（縦長の卵形）にグラデーションで丸みを出す
+      const grad = ctx.createRadialGradient(-bodyW * 0.3, -bodyH * 0.25, bodyW * 0.15, 0, 0, bodyW * 1.3);
+      grad.addColorStop(0, '#ffe08a');
+      grad.addColorStop(0.55, '#f0b429');
+      grad.addColorStop(1, '#c9820f');
+      ctx.save();
+      ctx.beginPath();
+      ctx.ellipse(0, r * 0.05, bodyW, bodyH, 0, 0, Math.PI * 2);
+      ctx.fillStyle = grad;
+      ctx.fill();
+      ctx.clip();
+
+      // ダイヤ模様（斜め格子）
+      ctx.strokeStyle = 'rgba(150, 90, 10, 0.55)';
+      ctx.lineWidth = Math.max(1, r * 0.035);
+      const step = r * 0.32;
+      for (let i = -6; i <= 6; i++) {
+        ctx.beginPath();
+        ctx.moveTo(i * step, -r * 1.6);
+        ctx.lineTo(i * step + r * 1.8, r * 1.6);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(i * step, -r * 1.6);
+        ctx.lineTo(i * step - r * 1.8, r * 1.6);
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      // 各ダイヤの中心にある「芽」の点
+      ctx.fillStyle = 'rgba(120, 70, 5, 0.5)';
+      for (let row = -3; row <= 3; row++) {
+        for (let col = -2; col <= 2; col++) {
+          const px = col * step * 1.4 + (row % 2 === 0 ? 0 : step * 0.7);
+          const py = row * step * 0.95 + r * 0.05;
+          if ((px * px) / (bodyW * bodyW) + (py * py) / (bodyH * bodyH) < 0.75) {
+            ctx.beginPath();
+            ctx.arc(px, py, r * 0.045, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+      }
+
+      // 輪郭を軽く強調
+      ctx.beginPath();
+      ctx.ellipse(0, r * 0.05, bodyW, bodyH, 0, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(140, 80, 10, 0.4)';
+      ctx.lineWidth = Math.max(1, r * 0.03);
+      ctx.stroke();
+
+      // ハイライト
+      ctx.beginPath();
+      ctx.ellipse(-bodyW * 0.35, -bodyH * 0.35, bodyW * 0.22, bodyH * 0.16, -0.5, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255,255,255,0.35)';
+      ctx.fill();
+
+      // 葉の冠（とがった葉を放射状に、濃淡2トーン）
+      const leafBaseY = -bodyH * 0.95;
+      const leafCount = 7;
+      for (let i = 0; i < leafCount; i++) {
+        const t = (i / (leafCount - 1)) * 2 - 1; // -1..1
+        const ang = t * 0.9; // 開き具合
+        const len = r * (0.85 - Math.abs(t) * 0.25);
+        const wid = r * 0.11;
+        ctx.save();
+        ctx.translate(t * r * 0.14, leafBaseY);
+        ctx.rotate(ang);
+        ctx.beginPath();
+        ctx.moveTo(-wid, 0);
+        ctx.quadraticCurveTo(-wid * 0.3, -len * 0.6, 0, -len);
+        ctx.quadraticCurveTo(wid * 0.3, -len * 0.6, wid, 0);
+        ctx.closePath();
+        ctx.fillStyle = i % 2 === 0 ? '#4a8f2f' : '#3a7a24';
+        ctx.fill();
+        ctx.restore();
+      }
+      break;
+    }
+    case 8: { // メロン
+      ctx.fillStyle = '#a9d64c';
+      ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,0.55)'; ctx.lineWidth = Math.max(1, r * 0.03);
+      for (let i = -3; i <= 3; i++) {
+        ctx.beginPath();
+        ctx.moveTo(i * r * 0.24, -r);
+        ctx.quadraticCurveTo(i * r * 0.24 * 1.4, 0, i * r * 0.24, r);
+        ctx.stroke();
+      }
+      for (let i = -2; i <= 2; i++) {
+        ctx.beginPath();
+        ctx.moveTo(-r, i * r * 0.28);
+        ctx.quadraticCurveTo(0, i * r * 0.28 * 1.4, r, i * r * 0.28);
+        ctx.stroke();
+      }
+      stem(ctx, r);
+      highlight(ctx, r);
+      break;
+    }
+    case 9: { // スイカ
+      ctx.fillStyle = '#2f8f4e';
+      ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#1f6b39';
+      for (let a = 0; a < 8; a++) {
+        const ang = (a / 8) * Math.PI * 2;
+        ctx.save();
+        ctx.rotate(ang);
+        ctx.beginPath();
+        ctx.ellipse(0, 0, r * 0.1, r, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+      highlight(ctx, r);
+      break;
+    }
+  }
+}
+
+function drawFruitAt(ctx, x, y, r, index, angle) {
+  ctx.save();
+  ctx.translate(x, y);
+  if (angle) ctx.rotate(angle);
+  drawFruitShape(ctx, r, index);
+  ctx.restore();
+}
+
+function setupNextPreview() {
+  nextCtx.clearRect(0, 0, 40, 40);
+  const f = FRUITS[nextFruitIndex];
+  const scale = Math.min(15 / f.radius, 1);
+  drawFruitAt(nextCtx, 20, 20, f.radius * scale, nextFruitIndex, 0);
+}
+
+function setupGuideRow() {
+  const guide = document.getElementById('guide');
+  guide.innerHTML = '';
+  FRUITS.forEach((f, i) => {
+    const c = document.createElement('canvas');
+    c.width = 26; c.height = 26;
+    const gctx = c.getContext('2d');
+    const scale = Math.min(11 / f.radius, 1);
+    drawFruitAt(gctx, 13, 13, f.radius * scale, i, 0);
+    guide.appendChild(c);
+    if (i < FRUITS.length - 1) {
+      const arrow = document.createElement('span');
+      arrow.className = 'arrow';
+      arrow.textContent = '→';
+      guide.appendChild(arrow);
+    }
+  });
+}
+
+function createFruitBody(x, y, index, isStatic) {
+  const f = FRUITS[index];
+  const body = Bodies.circle(x, y, f.radius, {
+    isStatic: !!isStatic,
+    restitution: 0.15,
+    friction: 0.4,
+    frictionAir: 0.001,
+    density: 0.001,
+    label: 'fruit_' + index,
+    render: { visible: false }
+  });
+  body.fruitIndex = index;
+  return body;
+}
+
+function spawnCurrentFruit() {
+  currentFruitIndex = nextFruitIndex;
+  nextFruitIndex = randomStartIndex();
+  setupNextPreview();
+  currentBody = createFruitBody(pointerX, DROP_Y, currentFruitIndex, true);
+  World.add(world, currentBody);
+  canDrop = true;
+}
+
+function initGame() {
+  score = 0;
+  scoreEl.textContent = '0';
+  gameOver = false;
+  overlay.classList.remove('show');
+  dangerTimer = 0;
+
+  if (render) {
+    Render.stop(render);
+    Runner.stop(runner);
+    World.clear(world);
+    Engine.clear(engine);
+  }
+
+  engine = Engine.create();
+  world = engine.world;
+  world.gravity.y = 1.1;
+
+  render = Render.create({
+    canvas: canvas,
+    engine: engine,
+    options: {
+      width: W,
+      height: H,
+      wireframes: false,
+      background: 'linear-gradient(#fffaf0,#ffe9c7)'
+    }
+  });
+
+  // 壁
+  const wallOptions = { isStatic: true, render: { fillStyle: '#f5deb3' } };
+  const ground = Bodies.rectangle(W / 2, H + WALL_THICK / 2, W + WALL_THICK * 2, WALL_THICK, wallOptions);
+  const leftWall = Bodies.rectangle(-WALL_THICK / 2, H / 2, WALL_THICK, H, wallOptions);
+  const rightWall = Bodies.rectangle(W + WALL_THICK / 2, H / 2, WALL_THICK, H, wallOptions);
+  World.add(world, [ground, leftWall, rightWall]);
+
+  nextFruitIndex = randomStartIndex();
+  spawnCurrentFruit();
+
+  Render.run(render);
+  runner = Runner.create();
+  Runner.run(runner, engine);
+
+  Events.on(engine, 'collisionStart', handleCollisions);
+  Events.on(engine, 'afterUpdate', checkGameOver);
+  Events.on(render, 'afterRender', drawAllFruits);
+}
+
+function drawAllFruits() {
+  const ctx = render.context;
+  const bodies = Matter.Composite.allBodies(world).filter(b => b.fruitIndex !== undefined);
+  for (const b of bodies) {
+    drawFruitAt(ctx, b.position.x, b.position.y, b.circleRadius, b.fruitIndex, b.angle);
+  }
+}
+
+function handleCollisions(event) {
+  const pairs = event.pairs;
+  const merged = new Set();
+
+  for (const pair of pairs) {
+    const { bodyA, bodyB } = pair;
+    if (merged.has(bodyA.id) || merged.has(bodyB.id)) continue;
+    if (bodyA.fruitIndex === undefined || bodyB.fruitIndex === undefined) continue;
+    if (bodyA.fruitIndex !== bodyB.fruitIndex) continue;
+    if (bodyA.isStatic || bodyB.isStatic) continue;
+
+    const idx = bodyA.fruitIndex;
+    if (idx >= FRUITS.length - 1) continue; // 最大サイズは合体しない
+
+    const midX = (bodyA.position.x + bodyB.position.x) / 2;
+    const midY = (bodyA.position.y + bodyB.position.y) / 2;
+
+    merged.add(bodyA.id);
+    merged.add(bodyB.id);
+
+    World.remove(world, bodyA);
+    World.remove(world, bodyB);
+
+    const newIndex = idx + 1;
+    const newBody = createFruitBody(midX, midY, newIndex, false);
+    World.add(world, newBody);
+
+    score += FRUITS[newIndex].radius;
+    scoreEl.textContent = score;
+    playMergeSound(newIndex);
+  }
+}
+
+function checkGameOver() {
+  // 万が一すり抜けた場合の保険：地面より下に行った果物は地面の上に戻す
+  const allFruits = Matter.Composite.allBodies(world).filter(b => b.fruitIndex !== undefined && !b.isStatic);
+  for (const b of allFruits) {
+    if (b.position.y - b.circleRadius > H) {
+      Body.setPosition(b, { x: b.position.x, y: H - b.circleRadius });
+      Body.setVelocity(b, { x: b.velocity.x, y: 0 });
+    }
+  }
+
+  if (gameOver) return;
+  const bodies = allFruits;
+  let danger = false;
+  for (const b of bodies) {
+    if (b.position.y - b.circleRadius < GAMEOVER_LINE && Math.abs(b.velocity.y) < 0.5) {
+      danger = true;
+      break;
+    }
+  }
+  if (danger) {
+    dangerTimer++;
+    if (dangerTimer > 90) {
+      triggerGameOver();
+    }
+  } else {
+    dangerTimer = 0;
+  }
+}
+
+function triggerGameOver() {
+  gameOver = true;
+
+  // 終了時点の盤面をスナップショットとして表示してから物理演算を止める
+  try {
+    document.getElementById('gameover-snapshot').src = canvas.toDataURL('image/png');
+  } catch (e) {
+    document.getElementById('gameover-snapshot').style.display = 'none';
+  }
+  Runner.stop(runner);
+  Render.stop(render);
+
+  finalScoreEl.textContent = score;
+
+  // 今回のスコアを履歴に記録し、ランキングを作成
+  const entry = { score: score, id: Date.now() + Math.random() };
+  scoreHistory.push(entry);
+  const sorted = [...scoreHistory].sort((a, b) => b.score - a.score);
+  const myRank = sorted.findIndex(e => e.id === entry.id) + 1;
+
+  const rankSummary = document.getElementById('rank-summary');
+  rankSummary.textContent = `今回は ${myRank} 位でした！`;
+
+  const top5 = sorted.slice(0, 5);
+  const listEl = document.getElementById('ranking-list');
+  listEl.innerHTML = '';
+  top5.forEach((e, i) => {
+    const row = document.createElement('div');
+    row.className = 'rank-row' + (e.id === entry.id ? ' me' : '');
+    row.innerHTML = `<span>${i + 1}位</span><span>${e.score}</span>`;
+    listEl.appendChild(row);
+  });
+  if (top5.length === 0) {
+    listEl.innerHTML = '<div class="rank-row">まだ記録がありません</div>';
+  }
+
+  overlay.classList.add('show');
+}
+
+function dropFruit() {
+  if (!canDrop || gameOver || !currentBody) return;
+  ensureAudio();
+  playDropSound();
+  canDrop = false;
+  Body.setStatic(currentBody, false);
+  currentBody = null;
+  setTimeout(() => {
+    if (!gameOver) spawnCurrentFruit();
+  }, 400);
+}
+
+function updatePointer(clientX) {
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = W / rect.width;
+  let x = (clientX - rect.left) * scaleX;
+  const f = FRUITS[currentFruitIndex];
+  x = Math.max(f.radius + 2, Math.min(W - f.radius - 2, x));
+  pointerX = x;
+  if (currentBody && currentBody.isStatic) {
+    Body.setPosition(currentBody, { x: pointerX, y: DROP_Y });
+  }
+}
+
+canvas.addEventListener('mousemove', (e) => updatePointer(e.clientX));
+canvas.addEventListener('click', () => dropFruit());
+canvas.addEventListener('touchmove', (e) => {
+  e.preventDefault();
+  updatePointer(e.touches[0].clientX);
+}, { passive: false });
+canvas.addEventListener('touchend', (e) => {
+  e.preventDefault();
+  dropFruit();
+}, { passive: false });
+
+document.getElementById('restart-btn').addEventListener('click', initGame);
+
+function fitGameContainer() {
+  const wrap = document.getElementById('wrap');
+  const guide = document.getElementById('guide');
+  const hud = document.getElementById('hud');
+  const hint = document.getElementById('hint');
+  const container = document.getElementById('game-container');
+
+  const wrapStyle = getComputedStyle(wrap);
+  const padTop = parseFloat(wrapStyle.paddingTop) || 0;
+  const padBottom = parseFloat(wrapStyle.paddingBottom) || 0;
+  const padLeft = parseFloat(wrapStyle.paddingLeft) || 0;
+  const padRight = parseFloat(wrapStyle.paddingRight) || 0;
+  const gap = parseFloat(wrapStyle.rowGap || wrapStyle.gap) || 8;
+
+  const reservedHeight = guide.offsetHeight + hud.offsetHeight + hint.offsetHeight + gap * 3 + padTop + padBottom;
+  const availHeight = window.innerHeight - reservedHeight;
+  const availWidth = wrap.clientWidth - padLeft - padRight;
+
+  const ratio = 560 / 400; // height / width
+  let w, h;
+  if (availWidth * ratio <= availHeight) {
+    w = availWidth;
+    h = w * ratio;
+  } else {
+    h = availHeight;
+    w = h / ratio;
+  }
+  w = Math.min(w, 480);
+  h = w * ratio;
+
+  container.style.width = w + 'px';
+  container.style.height = h + 'px';
+}
+
+window.addEventListener('resize', fitGameContainer);
+window.addEventListener('orientationchange', () => setTimeout(fitGameContainer, 100));
+
+setTimeout(fitGameContainer, 60);
+setupGuideRow();
+initGame();
+</script>
+</body>
+</html>
